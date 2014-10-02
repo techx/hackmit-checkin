@@ -2,7 +2,7 @@
 
 import sys, json
 
-OUTPUT_FILE = 'data.json'
+OUTPUT_FILE = 'data.js'
 
 def tsv2json(data):
     lines = data.strip().split('\n')[1:]
@@ -28,7 +28,7 @@ def main():
     with open(fin) as tsv:
         with open(fout, 'w') as out:
             json = tsv2json(tsv.read())
-            out.write('%s\n' % json)
+            out.write('var personData = %s;\n' % json)
 
 if __name__ == '__main__':
     main()

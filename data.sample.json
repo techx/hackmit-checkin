@@ -1,6 +1,6 @@
 [
     {
-        "account_id": 3,
+        "account_id": "3",
         "legal_waiver": "Full Legal Name",
         "school": "University Name Here",
         "badge_name": "Nickname",

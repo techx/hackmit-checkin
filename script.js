@@ -167,10 +167,13 @@
     if (name == legal) legal = '';
     printLabel(name, legal, school);
     var numTags = parseInt(luggage);
-    if (0 < numTags && numTags <= MAX_LUGGAGE) {
-      for (var i = 0; i < numTags; i++) {
-        printLabel(legal || name, person.email_address, person.phone_number);
-      }
+    if (numTags < 0) numTags = 0;
+    if (numTags > MAX_LUGGAGE) {
+      alert('Max luggage count exceeded. Printing ' + MAX_LUGGAGE + ' tags.');
+      numTags = MAX_LUGGAGE;
+    }
+    for (var i = 0; i < numTags; i++) {
+      printLabel(legal || name, person.email_address || '', person.phone_number || '');
     }
     logCheckin(person, name, legal, school, luggage);
   };
@@ -264,7 +267,7 @@
       } else {
         var selected = $('.selected');
         if (validateInput()) {
-          checkin($(selected[0]).data('match'));
+          checkin($(selected[0]).data('match') || {});
           reset();
         }
       }
@@ -311,6 +314,11 @@
         curr.removeClass('selected');
         prev.addClass('selected');
       }
+    } else if (e.which == 39 && !formSelected()) {
+      // RIGHT ARROW
+      reset();
+      $('#form').removeClass('hidden');
+      $('#form-name').focus();
     }
   });
 

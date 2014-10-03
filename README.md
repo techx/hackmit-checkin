@@ -25,7 +25,9 @@
     * Searching uses fuzzy search
     * Insert spaces between terms
 
-* Use the arrow keys to choose a name
+* Use the up and down arrow keys to choose a name
+
+* Use the right arrow key to enter custom data
 
 * Hit the enter key to make a selection
 

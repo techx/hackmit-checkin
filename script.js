@@ -246,7 +246,12 @@
           $('#form').removeClass('hidden');
           $('#form-name').val(match.badge_name);
           $('#form-legal').val(match.legal_waiver);
-          $('#form-school').val(match.school);
+          var school = match.school;
+          var parenLoc = school.indexOf('(');
+          if (parenLoc != -1) {
+            school = school.slice(0, parenLoc - 1);
+          }
+          $('#form-school').val(school);
           if (match.dietary_restriction == '1') {
             $('#card').text('TechCash Card Recipient');
           }

@@ -228,7 +228,7 @@
         var school = escapeHtml(match.school);
         var legal = escapeHtml(match.legal_waiver);
         var email = escapeHtml(match.email_address);
-        var contents = name + ' (' + email + ') - ' + school + ' - (' + legal + ')';
+        var contents = name + ' (' + email + ') - ' + school;
         var node = $('<li>' + contents + '</li>');
         node.data('match', match);
         res.append(node);

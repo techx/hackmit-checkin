@@ -3,10 +3,23 @@
 <head>
   <script src="DYMO.Label.Framework.latest.js"></script>
   <script src="jquery-2.1.1.min.js"></script>
+  <script src="data.js"></script>
   <script src="script.js"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>HackMIT Check-In</h1>
+  <div class="container">
+    <h1>HackMIT Check-In</h1>
+    <form id="form" class="hidden">
+      Name: <input type="text" id="form-name" /><br />
+      Legal Name: <input type="text" id="form-legal" /><br />
+      School: <input type="text" id="form-school" /><br />
+      Luggage: <input type="text" id="form-luggage" /><br />
+      <p id="card"></p>
+    </form>
+    <p id="searchbox"></p>
+    <ul id="results"></ul>
+    <div class="fadeout"></div>
+  </div>
 </body>
 </html>

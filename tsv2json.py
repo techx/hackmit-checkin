@@ -14,7 +14,9 @@ def tsv2json(data):
                 'legal_waiver': elems[1],
                 'school': elems[2],
                 'badge_name': elems[3],
-                'dietary_restriction': elems[4]
+                'email_address': elems[4],
+                'phone_number': elems[5],
+                'dietary_restriction': elems[6]
         }
         ret.append(datum)
     return json.dumps(ret, indent = 2, sort_keys = True)

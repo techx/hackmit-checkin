@@ -1,0 +1,73 @@
+@font-face {
+    font-family: 'Montserrat-Regular';
+    src: url(montserrat.ttf);
+}
+
+@font-face {
+    font-family: 'Source Code Pro';
+    src: url(sourcecodepro.ttf);
+}
+
+* {
+    font-family: 'Source Code Pro';
+}
+
+body {
+    background: #000000;
+    color: #ffffff;
+    overflow: hidden;
+    font-size: 15px;
+}
+
+h1 {
+    font-size: 2rem;
+}
+
+div.fadeout {
+    position: absolute; 
+    bottom: 0;
+    left: 0;
+    width: 100%; 
+    text-align: center; 
+    margin: 0;
+    padding: 30px 0; 
+    background-image: -webkit-gradient(linear,left top,left bottom,color-stop(0, transparent),color-stop(1, black));
+    background-image: -webkit-linear-gradient(top, transparent, black);
+    background-image: -moz-linear-gradient(top, transparent, black);
+    background-image: -ms-linear-gradient(top, transparent, black);
+    background-image: -o-linear-gradient(top, transparent, black);
+}
+
+li {
+    list-style-type: none;
+    color: #777777;
+}
+
+li.selected {
+    color: #ffffff;
+}
+
+p#searchbox {
+    color: #ffffff;
+}
+
+p#searchbox:before {
+    content: "> ";
+}
+
+p#card {
+    color: #00ff00;
+}
+
+input {
+    font-size: 0.8rem;
+    color: #ffffff;
+    width: 80%;
+    background: #000000;
+    border: none;
+    outline: none;
+}
+
+.hidden {
+    display: none;
+}

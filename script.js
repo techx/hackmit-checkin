@@ -244,7 +244,11 @@
         if (selected.length > 0) {
           var match = $(selected[0]).data('match');
           $('#form').removeClass('hidden');
-          $('#form-name').val(match.badge_name);
+          var badgeName = match.badge_name;
+          var nameParts = $.grep(badgeName.split(/[ ,]+/), function(part) {
+            return part != '';
+          });
+          $('#form-name').val(nameParts[0] || '');
           $('#form-legal').val(match.legal_waiver);
           var school = match.school;
           var parenLoc = school.indexOf('(');

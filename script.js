@@ -155,13 +155,14 @@
 
   var searchString = '';
 
-  function logCheckin(person, name, legal, organization, luggage) {
+  function logCheckin(person, name, legal, organization, luggage, sponsor) {
     var log = {
       database: person,
       printed: {
         name: name,
         legal: legal,
         organization: organization,
+        sponsor: sponsor,
         luggage: luggage,
         time: (new Date()).toString()
       }
@@ -175,6 +176,11 @@
     }).fail(function(data, status) {
       alert('Error saving check-in information to disk. Is the python server running?');
     });
+  };
+
+  function isTruthy(str) {
+    return str == 't' || str == 'T' || str == 'true' || str == 'True' ||
+      str == 'y' || str == 'Y' || str == 'yes' || str == 'Yes';
   };
 
   function validateInput() {
@@ -191,7 +197,7 @@
     var legal = $('#form-legal').val();
     var organization = $('#form-organization').val();
     var luggage = $('#form-luggage').val();
-    var sponsor = (person.sponsor == '1');
+    var sponsor = (person.sponsor == '1') || isTruthy($('#form-sponsor').val());
     if (name == legal) legal = '';
     printLabel(name, legal, organization, sponsor);
     var numTags = parseInt(luggage);
@@ -203,7 +209,7 @@
     for (var i = 0; i < numTags; i++) {
       printLabel(legal || name, person.email_address || '', person.phone_number || '', false);
     }
-    logCheckin(person, name, legal, organization, luggage);
+    logCheckin(person, name, legal, organization, luggage, sponsor);
   };
 
   function resetForm() {
@@ -212,6 +218,7 @@
     $('#form-legal').val('');
     $('#form-organization').val('');
     $('#form-luggage').val('0');
+    $('#form-sponsor').val('');
     $('#card').text('');
   };
 
@@ -291,6 +298,7 @@
           if (match.dietary_restriction == '1') {
             $('#card').text('TechCash Card Recipient');
           }
+          $('#form-sponsor').val(match.sponsor == '1' ? 'Yes' : 'No');
           $('#form-name').focus();
         }
       } else {
@@ -311,7 +319,8 @@
     return $('#form-name').is(':focus') ||
       $('#form-legal').is(':focus') ||
       $('#form-organization').is(':focus') ||
-      $('#form-luggage').is(':focus');
+      $('#form-luggage').is(':focus') ||
+      $('#form-sponsor').is(':focus');
   };
 
   $(document).on('keydown', function(e) {

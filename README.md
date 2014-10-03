@@ -7,6 +7,8 @@ When prompted about plugin installation, make sure you allow the plugin to run.
 
 Install the `montserrat.ttf` font on your computer.
 
+Run the `server.py` server software.
+
 If you are using Google Chrome, use Presentation Mode (go to `View`, and then
 click on `Enter Presentation Mode`).
 

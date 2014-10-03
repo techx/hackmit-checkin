@@ -11,7 +11,6 @@ def csv2json(data):
         company = elems[0]
         people = zip(elems[1::2], elems[2::2])
         for person in people:
-            print person
             if person[0] != '' or person[1] != '':
                 datum = {
                         'account_id': "-1",

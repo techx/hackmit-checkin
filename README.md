@@ -29,7 +29,7 @@
 
 * Hit the enter key to make a selection
 
-* Use the tab key to toggle between fields if they need to be edited
+* Use the tab key (and shift+tab) to move between fields if they need to be edited
 
 * Enter the number of luggage tags to print (0 to 5) if necessary
 

@@ -3,11 +3,12 @@
 To be able to use this software, you need to download the driver software for
 [Windows][dymo-win] or [Mac][dymo-mac].
 
-When prompted about plugin installation, make sure you allow the plugin to run.
-
 Install the `montserrat.ttf` font on your computer.
 
 Run the `server.py` server software.
+
+When prompted about plugin installation by your web browser, make sure you
+allow the plugin to run.
 
 If you are using Google Chrome, use Presentation Mode (go to `View`, and then
 click on `Enter Presentation Mode`).

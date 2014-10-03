@@ -11,11 +11,12 @@ def tsv2json(data, retlist):
         datum = {
                 'account_id': elems[0],
                 'legal_waiver': elems[1],
-                'school': elems[2],
+                'organization': elems[2],
                 'badge_name': elems[3],
                 'email_address': elems[4],
                 'phone_number': elems[5],
-                'dietary_restriction': elems[6]
+                'dietary_restriction': elems[6],
+                'sponsor': '0'
         }
         retlist.append(datum)
 
@@ -29,11 +30,12 @@ def csv2json(data, retlist):
                 datum = {
                         'account_id': "-1",
                         'legal_waiver': person[0],
-                        'school': company,
+                        'organization': company,
                         'badge_name': person[0],
                         'email_address': person[1],
                         'phone_number': '',
-                        'dietary_restriction': '0'
+                        'dietary_restriction': '0',
+                        'sponsor': '1'
                 }
                 retlist.append(datum)
 

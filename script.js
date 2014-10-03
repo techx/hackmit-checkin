@@ -6,7 +6,7 @@
   var MAX_RESULTS = 100;
   var MAX_LUGGAGE = 5;
 
-  function printLabel(name, fullname, school) {
+  function printLabel(name, fullname, organization, sponsor) {
     try {
       var labelXml = '<?xml version="1.0" encoding="utf-8"?>\
         <DieCutLabel Version="8.0" Units="twips">\
@@ -68,7 +68,7 @@
           </ObjectInfo>\
           <ObjectInfo>\
             <TextObject>\
-              <Name>school</Name>\
+              <Name>organization</Name>\
               <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />\
               <BackColor Alpha="0" Red="255" Green="255" Blue="255" />\
               <LinkedObjectName></LinkedObjectName>\
@@ -82,7 +82,7 @@
               <Verticalized>False</Verticalized>\
               <StyledText>\
                 <Element>\
-                  <String>school</String>\
+                  <String>organization</String>\
                   <Attributes>\
                     <Font Family="Montserrat" Size="18" Bold="False" Italic="False" Underline="False" Strikeout="False" />\
                     <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />\
@@ -90,7 +90,33 @@
                 </Element>\
               </StyledText>\
             </TextObject>\
-            <Bounds X="270" Y="1920" Width="2790" Height="768" />\
+            <Bounds X="270" Y="1920" Width="2790" Height="672" />\
+          </ObjectInfo>\
+          <ObjectInfo>\
+            <TextObject>\
+              <Name>sponsor</Name>\
+              <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />\
+              <BackColor Alpha="0" Red="255" Green="255" Blue="255" />\
+              <LinkedObjectName></LinkedObjectName>\
+              <Rotation>Rotation0</Rotation>\
+              <IsMirrored>False</IsMirrored>\
+              <IsVariable>True</IsVariable>\
+              <HorizontalAlignment>Center</HorizontalAlignment>\
+              <VerticalAlignment>Middle</VerticalAlignment>\
+              <TextFitMode>AlwaysFit</TextFitMode>\
+              <UseFullFontHeight>True</UseFullFontHeight>\
+              <Verticalized>False</Verticalized>\
+              <StyledText>\
+                <Element>\
+                  <String>sponsor</String>\
+                  <Attributes>\
+                    <Font Family="Montserrat" Size="18" Bold="False" Italic="False" Underline="False" Strikeout="False" />\
+                    <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />\
+                  </Attributes>\
+                </Element>\
+              </StyledText>\
+            </TextObject>\
+            <Bounds X="270" Y="2496" Width="2790" Height="384" />\
           </ObjectInfo>\
         </DieCutLabel>';
 
@@ -98,7 +124,8 @@
 
       label.setObjectText("name", name);
       label.setObjectText("fullname", fullname);
-      label.setObjectText("school", school);
+      label.setObjectText("organization", organization);
+      label.setObjectText("sponsor", sponsor ? 'SPONSOR' : '');
 
       // Select printer to print on
       var printers = dymo.label.framework.getPrinters();
@@ -106,7 +133,7 @@
         throw "No DYMO printers are installed. Install DYMO printers.";
       }
       var printerName = "";
-      for (var i = 0; i < printers.length; ++i)
+      for (var i = printers.length - 1; i >= 0; i--)
       {
         var printer = printers[i];
         if (printer.printerType == "LabelWriterPrinter")
@@ -128,13 +155,13 @@
 
   var searchString = '';
 
-  function logCheckin(person, name, legal, school, luggage) {
+  function logCheckin(person, name, legal, organization, luggage) {
     var log = {
       database: person,
       printed: {
         name: name,
         legal: legal,
-        school: school,
+        organization: organization,
         luggage: luggage,
         time: (new Date()).toString()
       }
@@ -162,10 +189,11 @@
   function checkin(person) {
     var name = $('#form-name').val();
     var legal = $('#form-legal').val();
-    var school = $('#form-school').val();
+    var organization = $('#form-organization').val();
     var luggage = $('#form-luggage').val();
+    var sponsor = (person.sponsor == '1');
     if (name == legal) legal = '';
-    printLabel(name, legal, school);
+    printLabel(name, legal, organization, sponsor);
     var numTags = parseInt(luggage);
     if (numTags < 0) numTags = 0;
     if (numTags > MAX_LUGGAGE) {
@@ -173,16 +201,16 @@
       numTags = MAX_LUGGAGE;
     }
     for (var i = 0; i < numTags; i++) {
-      printLabel(legal || name, person.email_address || '', person.phone_number || '');
+      printLabel(legal || name, person.email_address || '', person.phone_number || '', false);
     }
-    logCheckin(person, name, legal, school, luggage);
+    logCheckin(person, name, legal, organization, luggage);
   };
 
   function resetForm() {
     $('#form').addClass('hidden');
     $('#form-name').val('');
     $('#form-legal').val('');
-    $('#form-school').val('');
+    $('#form-organization').val('');
     $('#form-luggage').val('0');
     $('#card').text('');
   };
@@ -202,7 +230,7 @@
       for (var i = 0; i < queries.length; i++) {
         var terms = elem.badge_name.toLowerCase().split(/[ ,]+/)
           .concat(elem.legal_waiver.toLowerCase().split(/[ ,]+/))
-          .concat(elem.school.toLowerCase().split(/[ ,]+/));
+          .concat(elem.organization.toLowerCase().split(/[ ,]+/));
         var contains = false;
         for (var j = 0; j < terms.length; j++) {
           if (terms[j].indexOf(queries[i]) != -1) contains = true;
@@ -225,10 +253,10 @@
       for (var i = 0; i < matches.length && i < MAX_RESULTS; i++) {
         var match = matches[i];
         var name = escapeHtml(match.badge_name);
-        var school = escapeHtml(match.school);
+        var organization = escapeHtml(match.organization);
         var legal = escapeHtml(match.legal_waiver);
         var email = escapeHtml(match.email_address);
-        var contents = name + ' (' + email + ') - ' + school;
+        var contents = name + ' (' + email + ') - ' + organization;
         var node = $('<li>' + contents + '</li>');
         node.data('match', match);
         res.append(node);
@@ -254,12 +282,12 @@
           });
           $('#form-name').val(nameParts[0] || '');
           $('#form-legal').val(match.legal_waiver);
-          var school = match.school;
-          var parenLoc = school.indexOf('(');
+          var organization = match.organization;
+          var parenLoc = organization.indexOf('(');
           if (parenLoc != -1) {
-            school = school.slice(0, parenLoc - 1);
+            organization = organization.slice(0, parenLoc - 1);
           }
-          $('#form-school').val(school);
+          $('#form-organization').val(organization);
           if (match.dietary_restriction == '1') {
             $('#card').text('TechCash Card Recipient');
           }
@@ -282,7 +310,7 @@
   function formSelected() {
     return $('#form-name').is(':focus') ||
       $('#form-legal').is(':focus') ||
-      $('#form-school').is(':focus') ||
+      $('#form-organization').is(':focus') ||
       $('#form-luggage').is(':focus');
   };
 

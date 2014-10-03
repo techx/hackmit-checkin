@@ -28,6 +28,7 @@
 * Use the up and down arrow keys to choose a name
 
 * Use the right arrow key to enter custom data
+    * When adding a sponsor, put "y" in the sponsor box
 
 * Hit the enter key to make a selection
 

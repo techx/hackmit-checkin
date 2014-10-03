@@ -218,7 +218,7 @@
     $('#form-legal').val('');
     $('#form-organization').val('');
     $('#form-luggage').val('0');
-    $('#form-sponsor').val('');
+    $('#form-sponsor').val('No');
     $('#card').text('');
   };
 

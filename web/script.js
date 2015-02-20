@@ -4,9 +4,8 @@
 (function() {
   $.support.cors = true;
   var MAX_RESULTS = 100;
-  var MAX_LUGGAGE = 5;
 
-  function printLabel(name, fullname, organization, sponsor) {
+  function printLabel(name, fullname, group, organization, mentor) {
     try {
       var labelXml = '<?xml version="1.0" encoding="utf-8"?>\
         <DieCutLabel Version="8.0" Units="twips">\
@@ -94,7 +93,7 @@
           </ObjectInfo>\
           <ObjectInfo>\
             <TextObject>\
-              <Name>sponsor</Name>\
+              <Name>additional</Name>\
               <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />\
               <BackColor Alpha="0" Red="255" Green="255" Blue="255" />\
               <LinkedObjectName></LinkedObjectName>\
@@ -108,7 +107,7 @@
               <Verticalized>False</Verticalized>\
               <StyledText>\
                 <Element>\
-                  <String>sponsor</String>\
+                  <String>additional</String>\
                   <Attributes>\
                     <Font Family="Montserrat" Size="18" Bold="False" Italic="False" Underline="False" Strikeout="False" />\
                     <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />\
@@ -125,7 +124,19 @@
       label.setObjectText("name", name);
       label.setObjectText("fullname", fullname);
       label.setObjectText("organization", organization);
-      label.setObjectText("sponsor", sponsor ? 'SPONSOR' : '');
+      var additional = '';
+      if (mentor) {
+        if (group) {
+          additional = 'MENTOR (' + group + ')';
+        } else {
+          additional = 'MENTOR';
+        }
+      } else {
+        if (group) {
+          additional = '(' + group + ')';
+        }
+      }
+      label.setObjectText("additional", additional);
 
       // Select printer to print on
       var printers = dymo.label.framework.getPrinters();
@@ -155,16 +166,16 @@
 
   var searchString = '';
 
-  function logCheckin(person, name, legal, organization, luggage, sponsor) {
+  function logCheckin(person, name, legal, group, organization, mentor) {
     var log = {
       database: person,
       printed: {
         name: name,
         legal: legal,
+        group: group,
         organization: organization,
-        sponsor: sponsor,
-        luggage: luggage,
-        time: (new Date()).toString()
+        mentor: mentor,
+        time: (new Date()).toISOString()
       }
     };
     $.ajax({
@@ -184,42 +195,30 @@
   };
 
   function validateInput() {
-    var luggage = $('#form-luggage').val();
-    if (!(/^\d+$/.test(luggage))) {
-      alert('Invalid number for luggage (must be an integer)');
-      return false;
-    }
     return true;
   };
 
   function checkin(person) {
     var name = $('#form-name').val();
     var legal = $('#form-legal').val();
+    var group = $('#form-group').val();
     var organization = $('#form-organization').val();
-    var luggage = $('#form-luggage').val();
-    var sponsor = (person.sponsor == '1') || isTruthy($('#form-sponsor').val());
+    var mentor = isTruthy($('#form-mentor').val());
     if (name == legal) legal = '';
-    printLabel(name, legal, organization, sponsor);
-    var numTags = parseInt(luggage);
-    if (numTags < 0) numTags = 0;
-    if (numTags > MAX_LUGGAGE) {
-      alert('Max luggage count exceeded. Printing ' + MAX_LUGGAGE + ' tags.');
-      numTags = MAX_LUGGAGE;
-    }
-    for (var i = 0; i < numTags; i++) {
-      printLabel(legal || name, person.email_address || '', person.phone_number || '', false);
-    }
-    logCheckin(person, name, legal, organization, luggage, sponsor);
+    printLabel(name, legal, group, organization, mentor);
+    logCheckin(person, name, legal, group, organization, mentor);
   };
 
   function resetForm() {
     $('#form').addClass('hidden');
     $('#form-name').val('');
     $('#form-legal').val('');
+    $('#form-group').val('');
     $('#form-organization').val('');
-    $('#form-luggage').val('0');
-    $('#form-sponsor').val('No');
-    $('#card').text('');
+    $('#form-mentor').val('No');
+    $('#swag').text('');
+    $('#shirt-size').text('');
+    $('#laptop').text('');
   };
 
   function reset() {
@@ -235,8 +234,7 @@
     });
     return $.grep(personData, function(elem) {
       for (var i = 0; i < queries.length; i++) {
-        var terms = elem.badge_name.toLowerCase().split(/[ ,]+/)
-          .concat(elem.legal_waiver.toLowerCase().split(/[ ,]+/))
+        var terms = elem.name.toLowerCase().split(/[ ,]+/)
           .concat(elem.organization.toLowerCase().split(/[ ,]+/));
         var contains = false;
         for (var j = 0; j < terms.length; j++) {
@@ -259,11 +257,9 @@
       res.empty();
       for (var i = 0; i < matches.length && i < MAX_RESULTS; i++) {
         var match = matches[i];
-        var name = escapeHtml(match.badge_name);
+        var name = escapeHtml(match.name);
         var organization = escapeHtml(match.organization);
-        var legal = escapeHtml(match.legal_waiver);
-        var email = escapeHtml(match.email_address);
-        var contents = name + ' (' + email + ') - ' + organization;
+        var contents = name + ' - ' + organization;
         var node = $('<li>' + contents + '</li>');
         node.data('match', match);
         res.append(node);
@@ -283,22 +279,29 @@
         if (selected.length > 0) {
           var match = $(selected[0]).data('match');
           $('#form').removeClass('hidden');
-          var badgeName = match.badge_name;
-          var nameParts = $.grep(badgeName.split(/[ ,]+/), function(part) {
+          var name = match.name;
+          var nameParts = $.grep(name.split(/[ ,]+/), function(part) {
             return part != '';
           });
           $('#form-name').val(nameParts[0] || '');
-          $('#form-legal').val(match.legal_waiver);
+          $('#form-legal').val(name);
           var organization = match.organization;
           var parenLoc = organization.indexOf('(');
           if (parenLoc != -1) {
             organization = organization.slice(0, parenLoc - 1);
           }
+          $('#form-group').val(match.group)
           $('#form-organization').val(organization);
-          if (match.dietary_restriction == '1') {
-            $('#card').text('TechCash Card Recipient');
+          if (match.learnathon) {
+            $('#swag').text('Day 1 Swag Recipient');
+          } else {
+            $('#swag').text('Day 2 Swag Recipient');
           }
-          $('#form-sponsor').val(match.sponsor == '1' ? 'Yes' : 'No');
+          $('#shirt-size').text('Shirt Size: ' + match.size);
+          if (match.laptop && !match.mentor) {
+            $('#laptop').text('Laptop Recipient');
+          }
+          $('#form-mentor').val(match.mentor ? 'Yes' : 'No');
           $('#form-name').focus();
         }
       } else {
@@ -319,8 +322,7 @@
     return $('#form-name').is(':focus') ||
       $('#form-legal').is(':focus') ||
       $('#form-organization').is(':focus') ||
-      $('#form-luggage').is(':focus') ||
-      $('#form-sponsor').is(':focus');
+      $('#form-mentor').is(':focus');
   };
 
   $(document).on('keydown', function(e) {
@@ -364,16 +366,15 @@
     reset();
   });
 
-  var entityMap = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': '&quot;',
-    "'": '&#39;',
-    "/": '&#x2F;'
-  };
-
   function escapeHtml(string) {
+    var entityMap = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': '&quot;',
+      "'": '&#39;',
+      "/": '&#x2F;'
+    };
     return String(string).replace(/[&<>"'\/]/g, function (s) {
       return entityMap[s];
     });

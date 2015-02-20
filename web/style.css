@@ -55,7 +55,7 @@ p#searchbox:before {
     content: "> ";
 }
 
-p#card {
+p.info {
     color: #00ff00;
 }
 

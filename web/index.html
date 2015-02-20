@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>HackMIT Check-In</title>
+  <title>Blueprint Check-In</title>
   <script src="lib/DYMO.Label.Framework.latest.js"></script>
   <script src="lib/jquery-2.1.1.min.js"></script>
   <script src="data.js"></script>
@@ -10,14 +10,16 @@
 </head>
 <body>
   <div class="container">
-    <h1>HackMIT Check-In</h1>
+    <h1>Blueprint Check-In</h1>
     <form id="form" class="hidden">
       Name: <input type="text" id="form-name" /><br />
       Legal Name: <input type="text" id="form-legal" /><br />
+      Group: <input type="text" id="form-group" /><br />
       Organization: <input type="text" id="form-organization" /><br />
-      Luggage: <input type="text" id="form-luggage" /><br />
-      Sponsor: <input type="text" id="form-sponsor" /><br />
-      <p id="card"></p>
+      Mentor: <input type="text" id="form-mentor" /><br />
+      <p class="info" id="swag"></p>
+      <p class="info" id="shirt-size"></p>
+      <p class="info" id="laptop"></p>
     </form>
     <p id="searchbox"></p>
     <ul id="results"></ul>

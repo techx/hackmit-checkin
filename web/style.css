@@ -59,6 +59,11 @@ p.info {
     color: #00ff00;
 }
 
+p.warning {
+    color: #ff0000;
+    font-size: 150%;
+}
+
 input {
     font-size: 0.8rem;
     color: #ffffff;

@@ -219,6 +219,7 @@
     $('#swag').text('');
     $('#shirt-size').text('');
     $('#laptop').text('');
+    $('#forms').text('');
   };
 
   function reset() {
@@ -300,6 +301,9 @@
           $('#shirt-size').text('Shirt Size: ' + match.size);
           if (match.laptop && !match.mentor) {
             $('#laptop').text('Laptop Recipient');
+          }
+          if (!match.forms && !match.mentor) {
+            $('#forms').text('Warning: no forms!');
           }
           $('#form-mentor').val(match.mentor ? 'Yes' : 'No');
           $('#form-name').focus();

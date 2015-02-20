@@ -299,7 +299,7 @@
             $('#swag').text('Day 2 Swag Recipient');
           }
           $('#shirt-size').text('Shirt Size: ' + match.size);
-          if (match.laptop && !match.mentor) {
+          if (!match.laptop && !match.mentor) {
             $('#laptop').text('Laptop Recipient');
           }
           if (!match.forms && !match.mentor) {

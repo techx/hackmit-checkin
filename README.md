@@ -8,8 +8,8 @@
 
 ## Running
 
-* Run the `server.py` server software
-    * You can invoke this by going to the directory and running `./server.py`
+* Run the `server/server.py` server software
+    * You can invoke this by running `./server/server.py`
 
 * Open index.html in your web browser (Google Chrome recommended)
 

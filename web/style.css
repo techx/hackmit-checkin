@@ -1,11 +1,11 @@
 @font-face {
     font-family: 'Montserrat-Regular';
-    src: url(montserrat.ttf);
+    src: url(lib/montserrat.ttf);
 }
 
 @font-face {
     font-family: 'Source Code Pro';
-    src: url(sourcecodepro.ttf);
+    src: url(lib/sourcecodepro.ttf);
 }
 
 * {

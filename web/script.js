@@ -321,6 +321,7 @@
   function formSelected() {
     return $('#form-name').is(':focus') ||
       $('#form-legal').is(':focus') ||
+      $('#form-group').is(':focus') ||
       $('#form-organization').is(':focus') ||
       $('#form-mentor').is(':focus');
   };

@@ -43,4 +43,4 @@
 * Hit the enter key to print all tags
 
 [dymo-win]: http://download.dymo.com/dymo/Software/Win/DLS8Setup.8.5.1.exe
-[dymo-mac]: http://download.dymo.com/dymo/Software/Mac/DLS8Setup.8.5.1.dmg
+[dymo-mac]: http://download.dymo.com/dymo/Software/Mac/DLS8Setup.8.5.2.dmg

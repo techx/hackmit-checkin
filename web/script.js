@@ -362,9 +362,6 @@
           reset();
         }
       }
-    } else if (e.which == 27) {
-      //ESC
-      reset();
     } else if (!formSelected()) {
       var c = String.fromCharCode(e.which);
       searchString = searchString.concat(c);

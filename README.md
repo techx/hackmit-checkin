@@ -21,6 +21,8 @@
 
 ## Usage
 
+* Enter admin level access token when prompted
+
 * Type to search for a name
     * Searching uses fuzzy search
     * Insert spaces between terms

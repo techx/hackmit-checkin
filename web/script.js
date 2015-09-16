@@ -1,13 +1,15 @@
 // HackMIT Check-In System
 // Label is 2 5/16 x 2
 
-var users = [];
-
 (function() {
   $.support.cors = true;
   var MAX_RESULTS = 100;
-  var BASE_URL = 'https://my-staging.hackmit.org/api'
-  var access_token;
+  var RETRY_INTERVAL = 10000; //Amount of time (ms) between checking for failed checkins
+  var BASE_URL = 'https://my-staging.hackmit.org/api';
+
+  var access_token; //admin jws token
+  var users = []; //Stores retrieved users
+  var failed_user_ids = []; //Stores failed checkin users' ids
 
   function printLabel(name, fullname, email, school) {
     try {
@@ -158,15 +160,39 @@ var users = [];
 
   var searchString = '';
 
-  function logCheckin(user_id) {
+  function logCheckin(person) {
+    var log = {
+      database: person
+    };
     $.ajax({
-      url: BASE_URL + '/users/' + user_id + '/checkin',
+      url: 'http://localhost:31337',
       type: 'POST',
-      headers: { 'x-access-token': access_token }
+      data: {
+        json: JSON.stringify(log)
+      }
     }).fail(function(data, status) {
       alert('Error saving check-in information to disk. Is the python server running?');
     });
   };
+
+  function postCheckin(user_id) {
+    $.ajax({
+      url: BASE_URL + '/users/' + user_id + '/checkin',
+      type: 'POST',
+      headers: { 'x-access-token': access_token },
+      success: function(data) {
+        var i = failed_user_ids.indexOf(user_id);
+        if (i != -1) {
+          failed_user_ids.splice(i, 1);
+        }
+      }
+    }).fail(function(data, status) {
+      var i = failed_user_ids.indexOf(user_id);
+      if (i == -1) {
+        failed_user_ids.push(user_id);
+      }
+    });
+  }
 
   function isTruthy(str) {
     return str == 't' || str == 'T' || str == 'true' || str == 'True' ||
@@ -185,7 +211,8 @@ var users = [];
     var user_id = $('#form-user-id').val();
     if (name == legal) legal = '';
     printLabel(name, legal, email, school);
-    logCheckin(user_id);
+    postCheckin(user_id); //Sends checkin to server
+    logCheckin(person); //Worst comes to worse we have backup local copy
   };
 
   function resetForm() {
@@ -194,10 +221,9 @@ var users = [];
     $('#form-legal').val('');
     $('#form-email').val('');
     $('#form-school').val('');
-    $('#swag').text('');
     $('#shirt-size').text('');
-    $('#laptop').text('');
-    $('#forms').text('');
+    $('#admitted').text('');
+    $('#confirmed').text('');
   };
 
   function reset() {
@@ -254,21 +280,31 @@ var users = [];
   };
 
   function getUsers() {
+    var loadingMessage = $('#loading');
+    loadingMessage.removeClass('hidden');
     $.ajax({
       url: BASE_URL + '/users',
       type: 'GET',
       headers: { 'x-access-token': access_token },
       success:function(data) {
+        loadingMessage.addClass('hidden');
         users = data;
         console.log("Fetched users successfully")
       }
     }).fail(function(data, status) {
+      loadingMessage.addClass('hidden');
       alert('Error retrieving users. Did you enter the correct access token?');
     });
   }
 
   function promptAccessToken() {
     access_token = prompt("Please enter access token");
+  }
+
+  function checkFailedCheckin() {
+    for (var i = failed_user_ids.length - 1; i >= 0; i--) {
+      postCheckin(failed_user_ids[i]);
+    }
   }
 
   $(document).on('keydown', function(e) {
@@ -302,18 +338,21 @@ var users = [];
           }
           $('#form-email').val(match.email)
           $('#form-school').val(school);
-          if (match.learnathon) {
-            $('#swag').text('Day 1 Swag Recipient');
+          var shirt_size = match.confirmation.shirtSize
+          if (!shirt_size) {
+            $('#shirt-size').text('Shirt Size: Not Provided');
           } else {
-            $('#swag').text('Day 2 Swag Recipient');
+            $('#shirt-size').text('Shirt Size: ' + shirt_size);
           }
-          $('#shirt-size').text('Shirt Size: ' + match.size);
-          if (!match.laptop) {
-            $('#laptop').text('Laptop Recipient');
-          }
-          if (!match.forms) {
-            $('#forms').text('Warning: no forms!');
-          }
+          var admitted = match.status.admitted
+          $('#admitted').text('Admitted: ' + (admitted ? 'TRUE' : 'FALSE'));
+          $('#admitted').removeClass();
+          $('#admitted').addClass(admitted ? 'info' : 'warning');
+          var confirmed = match.status.confirmed
+          $('#confirmed').text('Confirmed: ' + (confirmed ? 'TRUE' : 'FALSE'));
+          $('#confirmed').removeClass();
+          $('#confirmed').addClass(confirmed ? 'info' : 'warning');
+
           $('#form-name').focus();
         }
       } else {
@@ -323,6 +362,9 @@ var users = [];
           reset();
         }
       }
+    } else if (e.which == 27) {
+      //ESC
+      reset();
     } else if (!formSelected()) {
       var c = String.fromCharCode(e.which);
       searchString = searchString.concat(c);
@@ -378,6 +420,7 @@ var users = [];
     while (access_token == null) {
       promptAccessToken();
     }
+    setInterval(checkFailedCheckin, RETRY_INTERVAL);
     getUsers();
     reset();
   });

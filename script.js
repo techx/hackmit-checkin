@@ -121,7 +121,7 @@
                 </Element>\
               </StyledText>\
             </TextObject>\
-            <Bounds X="270" Y="1920" Width="2790" Height="672" />\
+            <Bounds X="270" Y="2496" Width="2790" Height="384" />\
           </ObjectInfo>\
         </DieCutLabel>';
 

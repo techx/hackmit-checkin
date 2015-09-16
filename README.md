@@ -21,6 +21,11 @@
 
 ## Usage
 
+* cd to the web directory
+	* python -m SimpleHTTPServer 8000
+	* The interface should be accessable by going to http://localhost:8000 on your browser
+	* The above should take care of cross domain access issues
+
 * Enter admin level access token when prompted
 
 * Type to search for a name

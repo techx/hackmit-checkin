@@ -1,11 +1,15 @@
 // HackMIT Check-In System
 // Label is 2 5/16 x 2
 
+var users = [];
+
 (function() {
   $.support.cors = true;
   var MAX_RESULTS = 100;
+  var BASE_URL = 'https://my-staging.hackmit.org/api'
+  var access_token;
 
-  function printLabel(name, fullname, group, organization, mentor) {
+  function printLabel(name, fullname, email, school) {
     try {
       var labelXml = '<?xml version="1.0" encoding="utf-8"?>\
         <DieCutLabel Version="8.0" Units="twips">\
@@ -67,7 +71,7 @@
           </ObjectInfo>\
           <ObjectInfo>\
             <TextObject>\
-              <Name>organization</Name>\
+              <Name>school</Name>\
               <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />\
               <BackColor Alpha="0" Red="255" Green="255" Blue="255" />\
               <LinkedObjectName></LinkedObjectName>\
@@ -81,7 +85,7 @@
               <Verticalized>False</Verticalized>\
               <StyledText>\
                 <Element>\
-                  <String>organization</String>\
+                  <String>school</String>\
                   <Attributes>\
                     <Font Family="Montserrat" Size="18" Bold="False" Italic="False" Underline="False" Strikeout="False" />\
                     <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />\
@@ -93,7 +97,7 @@
           </ObjectInfo>\
           <ObjectInfo>\
             <TextObject>\
-              <Name>additional</Name>\
+              <Name>email</Name>\
               <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />\
               <BackColor Alpha="0" Red="255" Green="255" Blue="255" />\
               <LinkedObjectName></LinkedObjectName>\
@@ -107,7 +111,7 @@
               <Verticalized>False</Verticalized>\
               <StyledText>\
                 <Element>\
-                  <String>additional</String>\
+                  <String>school</String>\
                   <Attributes>\
                     <Font Family="Montserrat" Size="18" Bold="False" Italic="False" Underline="False" Strikeout="False" />\
                     <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />\
@@ -115,7 +119,7 @@
                 </Element>\
               </StyledText>\
             </TextObject>\
-            <Bounds X="270" Y="2496" Width="2790" Height="384" />\
+            <Bounds X="270" Y="1920" Width="2790" Height="672" />\
           </ObjectInfo>\
         </DieCutLabel>';
 
@@ -123,20 +127,8 @@
 
       label.setObjectText("name", name);
       label.setObjectText("fullname", fullname);
-      label.setObjectText("organization", organization);
-      var additional = '';
-      if (mentor) {
-        if (group) {
-          additional = 'MENTOR (' + group + ')';
-        } else {
-          additional = 'MENTOR';
-        }
-      } else {
-        if (group) {
-          additional = '(' + group + ')';
-        }
-      }
-      label.setObjectText("additional", additional);
+      label.setObjectText("school", school);
+      label.setObjectText("email", email);
 
       // Select printer to print on
       var printers = dymo.label.framework.getPrinters();
@@ -166,24 +158,11 @@
 
   var searchString = '';
 
-  function logCheckin(person, name, legal, group, organization, mentor) {
-    var log = {
-      database: person,
-      printed: {
-        name: name,
-        legal: legal,
-        group: group,
-        organization: organization,
-        mentor: mentor,
-        time: (new Date()).toISOString()
-      }
-    };
+  function logCheckin(user_id) {
     $.ajax({
-      url: 'http://localhost:31337',
+      url: BASE_URL + '/users/' + user_id + '/checkin',
       type: 'POST',
-      data: {
-        json: JSON.stringify(log)
-      }
+      headers: { 'x-access-token': access_token }
     }).fail(function(data, status) {
       alert('Error saving check-in information to disk. Is the python server running?');
     });
@@ -201,21 +180,20 @@
   function checkin(person) {
     var name = $('#form-name').val();
     var legal = $('#form-legal').val();
-    var group = $('#form-group').val();
-    var organization = $('#form-organization').val();
-    var mentor = isTruthy($('#form-mentor').val());
+    var email = $('#form-email').val();
+    var school = $('#form-school').val();
+    var user_id = $('#form-user-id').val();
     if (name == legal) legal = '';
-    printLabel(name, legal, group, organization, mentor);
-    logCheckin(person, name, legal, group, organization, mentor);
+    printLabel(name, legal, email, school);
+    logCheckin(user_id);
   };
 
   function resetForm() {
     $('#form').addClass('hidden');
     $('#form-name').val('');
     $('#form-legal').val('');
-    $('#form-group').val('');
-    $('#form-organization').val('');
-    $('#form-mentor').val('No');
+    $('#form-email').val('');
+    $('#form-school').val('');
     $('#swag').text('');
     $('#shirt-size').text('');
     $('#laptop').text('');
@@ -233,10 +211,13 @@
     var queries = $.grep(searchString.toLowerCase().split(/[ ,]+/), function(query) {
       return query != '';
     });
-    return $.grep(personData, function(elem) {
+    return $.grep(users, function(elem) {
       for (var i = 0; i < queries.length; i++) {
-        var terms = elem.name.toLowerCase().split(/[ ,]+/)
-          .concat(elem.organization.toLowerCase().split(/[ ,]+/));
+        var name = elem.profile && elem.profile.name;
+        var school = elem.profile && elem.profile.school;
+        var terms = [];
+        if (name != undefined) terms = terms.concat(name.toLowerCase().split(/[ ,]+/));
+        if (school != undefined) terms = terms.concat(school.toLowerCase().split(/[ ,]+/));
         var contains = false;
         for (var j = 0; j < terms.length; j++) {
           if (terms[j].indexOf(queries[i]) != -1) contains = true;
@@ -258,9 +239,9 @@
       res.empty();
       for (var i = 0; i < matches.length && i < MAX_RESULTS; i++) {
         var match = matches[i];
-        var name = escapeHtml(match.name);
-        var organization = escapeHtml(match.organization);
-        var contents = name + ' - ' + organization;
+        var name = escapeHtml(match.profile.name);
+        var school = escapeHtml(match.profile.school);
+        var contents = name + ' - ' + school;
         var node = $('<li>' + contents + '</li>');
         node.data('match', match);
         res.append(node);
@@ -272,6 +253,32 @@
     }
   };
 
+  function getUsers() {
+    $.ajax({
+      url: BASE_URL + '/users',
+      type: 'GET',
+      headers: { 'x-access-token': access_token },
+      success:function(data) {
+        users = data;
+        console.log("Fetched users successfully")
+      }
+    }).fail(function(data, status) {
+      alert('Error retrieving users. Did you enter the correct access token?');
+    });
+  }
+
+  function promptAccessToken() {
+    access_token = prompt("Please enter access token");
+  }
+
+  $(document).on('keydown', function(e) {
+    if (e.which == 8) {
+      //BACKSPACE
+      //Disables going back a page
+      e.preventDefault();
+    }
+  });
+
   $(document).on('keypress', function(e) {
     if (e.which == 13) {
       // ENTER
@@ -280,32 +287,33 @@
         if (selected.length > 0) {
           var match = $(selected[0]).data('match');
           $('#form').removeClass('hidden');
-          var name = match.name;
+          var name = match.profile.name;
           var nameParts = $.grep(name.split(/[ ,]+/), function(part) {
             return part != '';
           });
           $('#form-name').val(nameParts[0] || '');
           $('#form-legal').val(name);
-          var organization = match.organization;
-          var parenLoc = organization.indexOf('(');
+          var user_id = match.id
+          $('#form-user-id').val(user_id);
+          var school = match.profile.school;
+          var parenLoc = school.indexOf('(');
           if (parenLoc != -1) {
-            organization = organization.slice(0, parenLoc - 1);
+            school = school.slice(0, parenLoc - 1);
           }
-          $('#form-group').val(match.group)
-          $('#form-organization').val(organization);
+          $('#form-email').val(match.email)
+          $('#form-school').val(school);
           if (match.learnathon) {
             $('#swag').text('Day 1 Swag Recipient');
           } else {
             $('#swag').text('Day 2 Swag Recipient');
           }
           $('#shirt-size').text('Shirt Size: ' + match.size);
-          if (!match.laptop && !match.mentor) {
+          if (!match.laptop) {
             $('#laptop').text('Laptop Recipient');
           }
-          if (!match.forms && !match.mentor) {
+          if (!match.forms) {
             $('#forms').text('Warning: no forms!');
           }
-          $('#form-mentor').val(match.mentor ? 'Yes' : 'No');
           $('#form-name').focus();
         }
       } else {
@@ -325,9 +333,8 @@
   function formSelected() {
     return $('#form-name').is(':focus') ||
       $('#form-legal').is(':focus') ||
-      $('#form-group').is(':focus') ||
-      $('#form-organization').is(':focus') ||
-      $('#form-mentor').is(':focus');
+      $('#form-email').is(':focus') ||
+      $('#form-school').is(':focus');
   };
 
   $(document).on('keydown', function(e) {
@@ -368,6 +375,10 @@
   });
 
   $(document).ready(function() {
+    while (access_token == null) {
+      promptAccessToken();
+    }
+    getUsers();
     reset();
   });
 

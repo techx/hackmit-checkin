@@ -35,7 +35,7 @@
     return localDB.get('jwt');
   };
 
-  userDB.setStale = function(val) {
+  userDB.setMemoStale = function(val) {
     userDB._memoUsersStale = val;
   };
 
@@ -43,7 +43,7 @@
     // speed this up with an in memory array.
     if (!userDB._memoUsers || userDB._memoUsersStale) {
       userDB._memoUsers = localDB.get('DB_users');
-      userDB.setStale(false);
+      userDB.setMemoStale(false);
     }
     return userDB._memoUsers;
   };
@@ -51,7 +51,7 @@
   userDB.setUsers = function(users) {
     localDB.set('DB_users', users);
     localDB.set('DB_users_lastUpdated', Date.now());
-    userDB.setStale(true);
+    userDB.setMemoStale(true);
   };
 
   userDB.updateUser = function(user) {
@@ -63,7 +63,7 @@
       }
       return u;
     }));
-    userDB.setStale(true);
+    userDB.setMemoStale(true);
   };
 
   userDB.getQueue = function() {
@@ -361,7 +361,12 @@
         $(children[0]).addClass('selected');
       }
     }
-  };
+  }
+
+  function updateLastUpdatedTime() {
+    var date = new Date(localDB.get('DB_users_lastUpdated'));
+    $('#lastupdated').text(date.toString());
+  }
 
   function fetchUsers() {
     var loadingMessage = $('#loading');
@@ -371,6 +376,7 @@
       userDB.setUsers(data.filter(function(user){
         return user.verified;
       }));
+      updateLastUpdatedTime();
       console.log("Fetched users successfully");
     }, function(data, status){
       loadingMessage.addClass('hidden');
@@ -526,6 +532,8 @@
       e.preventDefault();
       promptAccessToken();
     });
+
+    updateLastUpdatedTime();
   }
 
   function escapeHtml(string) {

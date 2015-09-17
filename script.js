@@ -5,10 +5,108 @@
   $.support.cors = true;
   var MAX_RESULTS = 100;
   var RETRY_INTERVAL = 10000; //Amount of time (ms) between checking for failed checkins
+  var FETCH_INTERVAL = 300000; // five minutes
   var BASE_URL = 'https://my-staging.hackmit.org/api';
 
-  var access_token; //admin jws token
-  var users = []; //Stores retrieved users
+  // LocalStorage as DB
+  // ------------------------------------
+  window.userDB = {};
+  var localDB = {};
+
+  localDB.set = function(key, data) {
+    localStorage.setItem(key, JSON.stringify(data));
+  };
+
+  localDB.get = function(key) {
+    if (localStorage[key]){
+      try {
+        return JSON.parse(localStorage[key]);
+      } catch (e) {
+        return localStorage[key];
+      }
+    }
+  };
+
+  userDB.setToken = function(token) {
+    localDB.set('jwt', token);
+  };
+
+  userDB.getToken = function() {
+    return localDB.get('jwt');
+  };
+
+  userDB.getUsers = function() {
+    return localDB.get('DB_users') || [];
+  };
+
+  userDB.setUsers = function(users) {
+    localDB.set('DB_users', users);
+    localDB.set('DB_users_lastUpdated', Date.now());
+  };
+
+  userDB.updateUser = function(user) {
+    // Could be more efficient, but whatever.
+    var users = userDB.getUsers();
+    userDB.setUsers(users.map(function(u){
+      if (u._id === user._id) {
+        u = user;
+      }
+      return u;
+    }));
+  };
+
+  userDB.getQueue = function() {
+    return localDB.get('DB_queue') || {};
+  };
+
+  userDB.addToQueue = function(id) {
+    var queue = localDB.get('DB_queue') || {};
+    queue[id] = true;
+    localDB.set('DB_queue', queue);
+  };
+
+  userDB.removeFromQueue = function(id) {
+    // Skip if nobody in the queue.
+    var queue = localDB.get('DB_queue') || {};
+    if (!queue[id]) {
+      return;
+    }
+    delete queue[id];
+    localDB.set('DB_queue', queue);
+  };
+
+  userDB.updateQueue = function() {
+    // Attempt to reconsolidate the items in the queue.
+    var queue = localDB.get('DB_queue') || {};
+    Object.keys(queue).forEach(function(key){
+      postCheckin(key);
+    });
+  };
+
+  userDB.isStale = function() {
+    var timeToStale = 300000;
+    if (!localStorage.DB_users_lastUpdated) {
+      return true;
+    } else {
+      return Date.now() > parseInt(localStorage.DB_users_lastUpdated) + timeToStale;
+    }
+  };
+
+  function postCheckin(user_id) {
+    $.ajax({
+      url: BASE_URL + '/users/' + user_id + '/checkin',
+      type: 'POST',
+      headers: { 'x-access-token': userDB.getToken() },
+      success: function(data) {
+        userDB.updateUser(data);
+        userDB.removeFromQueue(data._id);
+      }
+    }).fail(function(data, status) {
+      userDB.addToQueue(user_id);
+    });
+  }
+
+  // ------------------------------------
   var failed_user_ids = []; //Stores failed checkin users' ids
 
   function printLabel(name, fullname, email, school) {
@@ -160,40 +258,6 @@
 
   var searchString = '';
 
-  function logCheckin(person) {
-    var log = {
-      database: person
-    };
-    $.ajax({
-      url: 'http://localhost:31337',
-      type: 'POST',
-      data: {
-        json: JSON.stringify(log)
-      }
-    }).fail(function(data, status) {
-      alert('Error saving check-in information to disk. Is the python server running?');
-    });
-  };
-
-  function postCheckin(user_id) {
-    $.ajax({
-      url: BASE_URL + '/users/' + user_id + '/checkin',
-      type: 'POST',
-      headers: { 'x-access-token': access_token },
-      success: function(data) {
-        var i = failed_user_ids.indexOf(user_id);
-        if (i != -1) {
-          failed_user_ids.splice(i, 1);
-        }
-      }
-    }).fail(function(data, status) {
-      var i = failed_user_ids.indexOf(user_id);
-      if (i == -1) {
-        failed_user_ids.push(user_id);
-      }
-    });
-  }
-
   function isTruthy(str) {
     return str == 't' || str == 'T' || str == 'true' || str == 'True' ||
       str == 'y' || str == 'Y' || str == 'yes' || str == 'Yes';
@@ -208,11 +272,10 @@
     var legal = $('#form-legal').val();
     var email = $('#form-email').val();
     var school = $('#form-school').val();
-    var user_id = $('#form-user-id').val();
+    var userId = $('#form-user-id').val();
     if (name == legal) legal = '';
     printLabel(name, legal, email, school);
-    postCheckin(user_id); //Sends checkin to server
-    logCheckin(person); //Worst comes to worse we have backup local copy
+    postCheckin(userId); //Sends checkin to server
   };
 
   function resetForm() {
@@ -237,6 +300,7 @@
     var queries = $.grep(searchString.toLowerCase().split(/[ ,]+/), function(query) {
       return query != '';
     });
+    var users = userDB.getUsers();
     return $.grep(users, function(elem) {
       for (var i = 0; i < queries.length; i++) {
         var name = elem.profile && elem.profile.name;
@@ -279,32 +343,36 @@
     }
   };
 
-  function getUsers() {
-    var loadingMessage = $('#loading');
-    loadingMessage.removeClass('hidden');
-    $.ajax({
-      url: BASE_URL + '/users',
-      type: 'GET',
-      headers: { 'x-access-token': access_token },
-      success:function(data) {
+  function fetchUsers() {
+    if (!userDB.isStale()) {
+      return userDB.getUsers();
+    } else {
+      var loadingMessage = $('#loading');
+      loadingMessage.removeClass('hidden');
+      $.ajax({
+        url: BASE_URL + '/users',
+        type: 'GET',
+        headers: { 'x-access-token': userDB.getToken() },
+        success:function(data) {
+          loadingMessage.addClass('hidden');
+          userDB.setUsers(data.filter(function(user){
+            return user.verified;
+          }));
+          console.log("Fetched users successfully");
+        }
+      }).fail(function(data, status) {
         loadingMessage.addClass('hidden');
-        users = data;
-        console.log("Fetched users successfully")
-      }
-    }).fail(function(data, status) {
-      loadingMessage.addClass('hidden');
-      alert('Error retrieving users. Did you enter the correct access token?');
-    });
+        alert('Error retrieving users. Did you enter the correct access token?');
+      });
+    }
   }
 
   function promptAccessToken() {
-    access_token = prompt("Please enter access token");
+    userDB.setToken(prompt("Please enter access token"));
   }
 
   function checkFailedCheckin() {
-    for (var i = failed_user_ids.length - 1; i >= 0; i--) {
-      postCheckin(failed_user_ids[i]);
-    }
+    userDB.updateQueue();
   }
 
   $(document).on('keydown', function(e) {
@@ -344,14 +412,24 @@
           } else {
             $('#shirt-size').text('Shirt Size: ' + shirt_size);
           }
+
           var admitted = match.status.admitted
-          $('#admitted').text('Admitted: ' + (admitted ? 'TRUE' : 'FALSE'));
-          $('#admitted').removeClass();
-          $('#admitted').addClass(admitted ? 'info' : 'warning');
+          $('#admitted')
+            .text('Admitted: ' + (admitted ? 'TRUE' : 'FALSE'))
+            .removeClass()
+            .addClass(admitted ? 'info' : 'warning');
+
           var confirmed = match.status.confirmed
-          $('#confirmed').text('Confirmed: ' + (confirmed ? 'TRUE' : 'FALSE'));
-          $('#confirmed').removeClass();
-          $('#confirmed').addClass(confirmed ? 'info' : 'warning');
+          $('#confirmed')
+            .text('Confirmed: ' + (confirmed ? 'TRUE' : 'FALSE'))
+            .removeClass()
+            .addClass(confirmed ? 'info' : 'warning');
+
+          var checkedIn = match.status.checkedIn
+          $('#checked-in')
+            .text('Checked In: ' + (checkedIn ? 'TRUE' : 'FALSE'))
+            .removeClass()
+            .addClass(checkedIn ? 'info' : 'warning');
 
           $('#form-name').focus();
         }
@@ -414,11 +492,12 @@
   });
 
   $(document).ready(function() {
-    while (access_token == null) {
+    if (!userDB.getToken()){
       promptAccessToken();
     }
     setInterval(checkFailedCheckin, RETRY_INTERVAL);
-    getUsers();
+    setInterval(fetchUsers, FETCH_INTERVAL);
+    fetchUsers();
     reset();
   });
 

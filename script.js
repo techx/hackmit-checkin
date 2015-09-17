@@ -344,27 +344,23 @@
   };
 
   function fetchUsers() {
-    if (!userDB.isStale()) {
-      return userDB.getUsers();
-    } else {
-      var loadingMessage = $('#loading');
-      loadingMessage.removeClass('hidden');
-      $.ajax({
-        url: BASE_URL + '/users',
-        type: 'GET',
-        headers: { 'x-access-token': userDB.getToken() },
-        success:function(data) {
-          loadingMessage.addClass('hidden');
-          userDB.setUsers(data.filter(function(user){
-            return user.verified;
-          }));
-          console.log("Fetched users successfully");
-        }
-      }).fail(function(data, status) {
+    var loadingMessage = $('#loading');
+    loadingMessage.removeClass('hidden');
+    $.ajax({
+      url: BASE_URL + '/users',
+      type: 'GET',
+      headers: { 'x-access-token': userDB.getToken() },
+      success:function(data) {
         loadingMessage.addClass('hidden');
-        alert('Error retrieving users. Did you enter the correct access token?');
-      });
-    }
+        userDB.setUsers(data.filter(function(user){
+          return user.verified;
+        }));
+        console.log("Fetched users successfully");
+      }
+    }).fail(function(data, status) {
+      loadingMessage.addClass('hidden');
+      alert('Error retrieving users. Did you enter the correct access token?');
+    });
   }
 
   function promptAccessToken() {
@@ -496,10 +492,26 @@
       promptAccessToken();
     }
     setInterval(checkFailedCheckin, RETRY_INTERVAL);
-    setInterval(fetchUsers, FETCH_INTERVAL);
-    fetchUsers();
+    setInterval(function() {
+      if (userDB.isStale()) {
+        fetchUsers();
+      }
+    }, FETCH_INTERVAL);
     reset();
+    init();
   });
+
+  function init() {
+    $('#fetch').click(function(e) {
+      e.preventDefault();
+      fetchUsers();
+    });
+
+    $('#token').click(function(e) {
+      e.preventDefault();
+      promptAccessToken();
+    });
+  }
 
   function escapeHtml(string) {
     var entityMap = {

@@ -9,11 +9,15 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>HackMIT Check-In</h1>
+  <div>
+    <span>hackmit check-in</span>
+    <a href="#" id="fetch">fetch latest</a>
+    <a href="#" id="token">set token</a>
     <div id="loading" class="hidden">
-      Fetching all users... Please wait...
+      fetching all users... please wait...
     </div>
+  </div>
+  <p>
     <form id="form" class="hidden">
       Name: <input type="text" id="form-name" /><br />
       Legal Name: <input type="text" id="form-legal" /><br />
@@ -28,6 +32,6 @@
     <p id="searchbox"></p>
     <ul id="results"></ul>
     <div class="fadeout"></div>
-  </div>
+  </p>
 </body>
 </html>

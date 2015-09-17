@@ -35,13 +35,23 @@
     return localDB.get('jwt');
   };
 
+  userDB.setStale = function(val) {
+    userDB._memoUsersStale = val;
+  };
+
   userDB.getUsers = function() {
-    return localDB.get('DB_users') || [];
+    // speed this up with an in memory array.
+    if (!userDB._memoUsers || userDB._memoUsersStale) {
+      userDB._memoUsers = localDB.get('DB_users');
+      userDB.setStale(false);
+    }
+    return userDB._memoUsers;
   };
 
   userDB.setUsers = function(users) {
     localDB.set('DB_users', users);
     localDB.set('DB_users_lastUpdated', Date.now());
+    userDB.setStale(true);
   };
 
   userDB.updateUser = function(user) {
@@ -53,6 +63,7 @@
       }
       return u;
     }));
+    userDB.setStale(true);
   };
 
   userDB.getQueue = function() {
@@ -81,6 +92,15 @@
     Object.keys(queue).forEach(function(key){
       postCheckin(key);
     });
+  };
+
+  userDB.fetchUsers = function(success, fail) {
+    $.ajax({
+      url: BASE_URL + '/users',
+      type: 'GET',
+      headers: { 'x-access-token': userDB.getToken() },
+      success: success
+    }).fail(fail);
   };
 
   userDB.isStale = function() {
@@ -346,21 +366,16 @@
   function fetchUsers() {
     var loadingMessage = $('#loading');
     loadingMessage.removeClass('hidden');
-    $.ajax({
-      url: BASE_URL + '/users',
-      type: 'GET',
-      headers: { 'x-access-token': userDB.getToken() },
-      success:function(data) {
-        loadingMessage.addClass('hidden');
-        userDB.setUsers(data.filter(function(user){
-          return user.verified;
-        }));
-        console.log("Fetched users successfully");
-      }
-    }).fail(function(data, status) {
+    userDB.fetchUsers(function(data){
+      loadingMessage.addClass('hidden');
+      userDB.setUsers(data.filter(function(user){
+        return user.verified;
+      }));
+      console.log("Fetched users successfully");
+    }, function(data, status){
       loadingMessage.addClass('hidden');
       alert('Error retrieving users. Did you enter the correct access token?');
-    });
+    })
   }
 
   function promptAccessToken() {

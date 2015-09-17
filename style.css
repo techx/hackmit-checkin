@@ -77,3 +77,10 @@ input {
 .hidden {
     display: none;
 }
+
+a:link,
+a:visited,
+a:hover,
+a:active {
+    color: #3498db;
+}

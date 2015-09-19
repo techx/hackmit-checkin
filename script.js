@@ -487,6 +487,10 @@
         }
       }
     } else if (!formSelected()) {
+      if (e.which == 0) {
+        return;
+      }
+
       var c = String.fromCharCode(e.which);
       searchString = searchString.concat(c);
       updateSearch();
@@ -497,6 +501,7 @@
     return $('#form-name').is(':focus') ||
       $('#form-legal').is(':focus') ||
       $('#form-email').is(':focus') ||
+      $('#form-description').is(':focus') ||
       $('#form-school').is(':focus');
   };
 

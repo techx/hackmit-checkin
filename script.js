@@ -6,7 +6,7 @@
   var MAX_RESULTS = 100;
   var RETRY_INTERVAL = 10000; //Amount of time (ms) between checking for failed checkins
   var FETCH_INTERVAL = 300000; // five minutes
-  var BASE_URL = 'https://my-staging.hackmit.org/api';
+  var BASE_URL = 'https://my.hackmit.org/api';
 
   // LocalStorage as DB
   // ------------------------------------

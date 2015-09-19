@@ -374,7 +374,7 @@
     userDB.fetchUsers(function(data){
       loadingMessage.addClass('hidden');
       userDB.setUsers(data.filter(function(user){
-        return user.verified && user.status.admitted;
+        return user.verified;
       }));
       updateLastUpdatedTime();
       console.log("Fetched users successfully");

@@ -42,7 +42,7 @@
   userDB.getUsers = function() {
     // speed this up with an in memory array.
     if (!userDB._memoUsers || userDB._memoUsersStale) {
-      userDB._memoUsers = localDB.get('DB_users');
+      userDB._memoUsers = localDB.get('DB_users') || [];
       userDB.setMemoStale(false);
     }
     return userDB._memoUsers;
@@ -374,7 +374,7 @@
     userDB.fetchUsers(function(data){
       loadingMessage.addClass('hidden');
       userDB.setUsers(data.filter(function(user){
-        return user.verified;
+        return user.verified && user.admitted;
       }));
       updateLastUpdatedTime();
       console.log("Fetched users successfully");

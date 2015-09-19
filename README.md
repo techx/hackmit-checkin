@@ -8,23 +8,14 @@
 
 ## Running
 
-* Run the `server/server.py` server software
-    * You can invoke this by running `./server/server.py`
+Run the app with `./start_server`
 
-* Open index.html in your web browser (Google Chrome recommended)
-
-* When prompted about plugin installation by your web browser, make sure you
-  allow the plugin to run
+Visit `localhost:8000`
 
 * If you are using Google Chrome, use Presentation Mode (go to `View`, and then
   click on `Enter Presentation Mode`).
 
 ## Usage
-
-* cd to the web directory
-	* python -m SimpleHTTPServer 8000
-	* The interface should be accessable by going to http://localhost:8000 on your browser
-	* The above should take care of cross domain access issues
 
 * Enter admin level access token when prompted
 

@@ -8,18 +8,16 @@
 
 ## Running
 
-* Run the `server/server.py` server software
-    * You can invoke this by running `./server/server.py`
+Run the app with `./start_server`
 
-* Open index.html in your web browser (Google Chrome recommended)
-
-* When prompted about plugin installation by your web browser, make sure you
-  allow the plugin to run
+Visit `localhost:8000`
 
 * If you are using Google Chrome, use Presentation Mode (go to `View`, and then
   click on `Enter Presentation Mode`).
 
 ## Usage
+
+* Enter admin level access token when prompted
 
 * Type to search for a name
     * Searching uses fuzzy search

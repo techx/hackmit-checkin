@@ -129,7 +129,7 @@
   // ------------------------------------
   var failed_user_ids = []; //Stores failed checkin users' ids
 
-  function printLabel(name, fullname, email, school) {
+  function printLabel(name, fullname, description, email, school) {
     try {
       var labelXml = '<?xml version="1.0" encoding="utf-8"?>\
         <DieCutLabel Version="8.0" Units="twips">\
@@ -161,7 +161,7 @@
                 </Element>\
               </StyledText>\
             </TextObject>\
-            <Bounds X="270" Y="192" Width="2790" Height="1152" />\
+            <Bounds X="270" Y="192" Width="2790" Height="1000" />\
           </ObjectInfo>\
           <ObjectInfo>\
             <TextObject>\
@@ -187,7 +187,33 @@
                 </Element>\
               </StyledText>\
             </TextObject>\
-            <Bounds X="270" Y="1344" Width="2790" Height="576" />\
+            <Bounds X="270" Y="1050" Width="2790" Height="300" />\
+          </ObjectInfo>\
+           <ObjectInfo>\
+            <TextObject>\
+              <Name>description</Name>\
+              <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />\
+              <BackColor Alpha="0" Red="255" Green="255" Blue="255" />\
+              <LinkedObjectName></LinkedObjectName>\
+              <Rotation>Rotation0</Rotation>\
+              <IsMirrored>False</IsMirrored>\
+              <IsVariable>True</IsVariable>\
+              <HorizontalAlignment>Center</HorizontalAlignment>\
+              <VerticalAlignment>Middle</VerticalAlignment>\
+              <TextFitMode>AlwaysFit</TextFitMode>\
+              <UseFullFontHeight>True</UseFullFontHeight>\
+              <Verticalized>False</Verticalized>\
+              <StyledText>\
+                <Element>\
+                  <String>fullname</String>\
+                  <Attributes>\
+                    <Font Family="Montserrat" Size="18" Bold="False" Italic="False" Underline="False" Strikeout="False" />\
+                    <ForeColor Alpha="255" Red="0" Green="0" Blue="0" />\
+                  </Attributes>\
+                </Element>\
+              </StyledText>\
+            </TextObject>\
+            <Bounds X="270" Y="1400" Width="2790" Height="400" />\
           </ObjectInfo>\
           <ObjectInfo>\
             <TextObject>\
@@ -213,7 +239,7 @@
                 </Element>\
               </StyledText>\
             </TextObject>\
-            <Bounds X="270" Y="1920" Width="2790" Height="672" />\
+            <Bounds X="270" Y="1800" Width="2790" Height="400" />\
           </ObjectInfo>\
           <ObjectInfo>\
             <TextObject>\
@@ -239,7 +265,7 @@
                 </Element>\
               </StyledText>\
             </TextObject>\
-            <Bounds X="270" Y="2496" Width="2790" Height="384" />\
+            <Bounds X="270" Y="2100" Width="2790" Height="384" />\
           </ObjectInfo>\
         </DieCutLabel>';
 
@@ -247,6 +273,7 @@
 
       label.setObjectText("name", name);
       label.setObjectText("fullname", fullname);
+      label.setObjectText("description", description);
       label.setObjectText("school", school);
       label.setObjectText("email", email);
 
@@ -293,8 +320,9 @@
     var email = $('#form-email').val();
     var school = $('#form-school').val();
     var userId = $('#form-user-id').val();
+    var description = $('#form-description').val();
     if (name == legal) legal = '';
-    printLabel(name, legal, email, school);
+    printLabel(name, legal, description, email, school);
     postCheckin(userId); //Sends checkin to server
   };
 
@@ -421,7 +449,8 @@
           if (parenLoc != -1) {
             school = school.slice(0, parenLoc - 1);
           }
-          $('#form-email').val(match.email)
+          $('#form-description').val(match.profile.description || 'hacker');
+          $('#form-email').val(match.email);
           $('#form-school').val(school);
           var shirt_size = match.confirmation.shirtSize
           if (!shirt_size) {
